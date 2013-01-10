@@ -6,13 +6,15 @@
     "type": "git",
     "url": "git://github.com/dominictarr/remember.git"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
+    "scuttlebutt": "~5.5.4",
+    "rimraf": "~2.1.1",
+    "tape": "~0.1.5"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
   },
   "author": "'Dominic Tarr' <dominic.tarr@gmail.com> (http://dominictarr.com)",
-  "license": "MIT"  
+  "license": "MIT"
 }

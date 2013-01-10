@@ -1,11 +1,16 @@
 module.exports = function (kv) {
+  if(!kv) kv = require('fs')
   //append to a file
 
-return function sync(doc, name, args) {
+//UPDATE, the best way to do this is to use level-scuttlebutt.
+//if you still just want to use this, then
+return function sync(doc, name, cb) {
+
   name = name || doc.key
   function write () {
+    cb(null, doc)
     doc.createReadStream() //track changes forever
-      .pipe(kv.put(name))   
+      .pipe(kv.createWriteStream(name))   
   }
 
   // !!!FIX THIS!!!
@@ -15,13 +20,13 @@ return function sync(doc, name, args) {
   //
   // TODO: make this reliable.
 
-  kv.has(name, function (err) {
+  kv.stat(name, function (err) {
     if(err) { //the doc is new
       doc.sync = true
       return write() 
     }
-    var stream = kv.get(name)
-    stream.once('end', write)
+    var stream = kv.createReadStream(name)
+    stream.once('close', write)
       .pipe(doc.createWriteStream())
   })
 }
@@ -57,23 +62,28 @@ return function sync(doc, name, args) {
 
     could I make that work with the same exchange as tcp?
     what would the handshakes do? would they break stuff?
+
+    
   */
-  
-  return function (doc, key, timer) {
+
+  return function (doc, key, timer, cb) {
+    if('function' === typeof timer)
+      cb = timer, timer = null
+
     var turn, both, cs
     timer = timer || 6e5 //ten minutes
     key = key || doc.key
 
     function read(key, ready) {
-      kv.has(key, function (err) {
+      kv.stat(key, function (err) {
         if(err) return ready(err)
         var ds = doc.createWriteStream()
-        kv.get(key).on('end', ready).pipe(ds)
+        kv.createReadStream(key).on('end', ready).pipe(ds)
       })
     }
     function write(key) {
       var source = doc.createReadStream()
-      source.pipe(kv.put(key))
+      source.pipe(kv.createWriteStream(key))
       return source
     }
 
